@@ -1,5 +1,6 @@
 # This module is a class that represents an L-system string generator
 
+
 class L_sys:
     def __init__(self):
         self.alphabet = set()
