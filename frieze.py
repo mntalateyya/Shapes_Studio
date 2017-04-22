@@ -49,18 +49,3 @@ def repeat(cw, ch, r, s, (x, y)):
 
     return coords
 
-
-def drawcircle(e):
-    global c
-    coords = repeat(600, 60, 1, 3, (e.x, e.y))
-    for i in coords:
-        c.create_oval(i[0] - 2, i[1] - 2, i[0] + 2, i[1] + 2, fill='blue')
-
-
-print repeat(30, 6, 1, 0, (2, 2))
-# '''
-wnd = Tkinter.Tk()
-c = Tkinter.Canvas(wnd, width=600, height=60)
-c.pack()
-c.bind('<Button-1>', drawcircle)
-wnd.mainloop()  # '''
