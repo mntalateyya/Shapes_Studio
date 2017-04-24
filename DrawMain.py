@@ -1,12 +1,31 @@
 import Tkinter
 from PIL import Image, ImageDraw, ImageTk
 import frieze
+import ColorPicker
+
 class Helper:
-    def __init__(self):
+    def __init__(self, im):
         self.x = 0
         self.y = 0
         self.coords = []
-        self.ims = []
+        self.coordsList = []
+        self.im = im
+        self.undostack = []
+        self.redostack = []
+    def new_im(self,im):
+        im.save('test.png')
+        self.redostack = []
+        self.undostack.append(self.im)
+        self.im = im
+    def undo(self):
+        if self.undostack:
+            self.redostack.append(self.im)
+            self.im = self.undostack.pop()
+    def redo(self):
+        if self.redostack:
+            self.undostack.append(self.im)
+            self.im = self.redostack.pop()
+
 
 class Draw:
     def __init__(self, x, y, t, s):
@@ -25,8 +44,10 @@ class Draw:
 
         self.tools = Tkinter.Canvas(self.tframe, width=960, height=60,
                                     bg='#cccccc',highlightthickness=0, border=0)
-        self.cv = Tkinter.Canvas(self.cframe, width=900,
-                                height=(120 if (t==2) else 590), bg='white')
+        self.cvw = 900
+        self.cvh = 120 if (t==2) else 590
+        self.cv = Tkinter.Canvas(self.cframe, width=self.cvw,
+                                height=self.cvh, bg='white')
         self.tools.pack()
         self.cv.pack(pady=20)
 
@@ -35,9 +56,11 @@ class Draw:
 
         self.labels.append(ImageTk.PhotoImage(Image.open('Resources/undo.bmp')))
         self.ids += [self.tools.create_image(15, 15, image=self.labels[-1],anchor=Tkinter.NW)]
+        self.tools.tag_bind(self.ids[-1], '<Button-1>', lambda e:self.undo())
 
         self.labels.append(ImageTk.PhotoImage(Image.open('Resources/redo.bmp')))
         self.ids += [self.tools.create_image(60, 15, image=self.labels[-1],anchor=Tkinter.NW)]
+        self.tools.tag_bind(self.ids[-1], '<Button-1>', lambda e:self.redo())
 
         self.labels.append(ImageTk.PhotoImage(Image.open('Resources/pen.bmp')))
         self.ids += [self.tools.create_image(150, 15, image=self.labels[-1],anchor=Tkinter.NW)]
@@ -65,15 +88,21 @@ class Draw:
             troughcolor='#888888')
         self.tools.create_window(540, 5, window=self.widthS, anchor=Tkinter.NW)
 
+        self.color = '#000000'
+
         self.tools.create_text(690,30,text='Color', fill='slate gray')
-        self.tools.create_oval(720, 15, 750, 45, fill='white', width=3)
+        self.colbox = self.tools.create_oval(720, 15, 750, 45, fill=self.color, width=3)
+        self.tools.tag_bind(self.colbox, '<Button-1>', lambda e:
+                                        ColorPicker.ColorPicker(self, self.color))
 
         self.labels.append(ImageTk.PhotoImage(Image.open('Resources/finish.bmp')))
         self.tools.create_image(840, 15, image=self.labels[-1],anchor=Tkinter.NW)
 
         self.cv.bind('<Button-1>', self.press)
         self.cv.bind('<B1-Motion>', self.move)
-        self.helper = Helper()
+        self.cv.bind('<ButtonRelease-1>', self.release)
+
+        self.helper = Helper(Image.new('RGBA',(self.cvw, self.cvh), (255,255,255,0)))
 
         self.toolname = {'pen':0, 'line':1, 'curve':2, 'fill':3, 'eraser':4}
         self.tool = 0
@@ -82,14 +111,47 @@ class Draw:
         self.width = self.widthS.get()
         self.root.mainloop()
 
+    def draw(self):
+        self.cv.delete(Tkinter.ALL)
+        self.labels.append(ImageTk.PhotoImage(self.helper.im))
+        self.cv.create_image(0, 0, image=self.labels[-1],anchor=Tkinter.NW)
+        self.grid()
+
+    def undo(self):
+        self.helper.undo()
+        self.draw()
+
+    def redo(self):
+        self.helper.redo()
+        self.draw()
+
+    def changeColor(self, color):
+        print color
+        self.color = color
+        self.colbox = self.tools.create_oval(720, 15, 750, 45, fill=self.color, width=3)
+        self.tools.tag_bind(self.colbox, '<Button-1>', lambda e:
+                                        ColorPicker.ColorPicker(self, self.color))
+
     def change_tool(self, t, x):
         self.tool = t
         self.tools.coords(self.dot,x-3,47,x+3,53)
+
+    def fill(self, pic, color, target, x, y):
+        if 0<x<self.cvw and 1<y<self.cvh:
+            stack = [(x,y)]
+            while stack:
+                x,y = stack.pop()
+                if 0<x<self.cvw and 1<y<self.cvh:
+                    if pic[x, y]==target:
+                        pic[x, y] = color
+                        stack += [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
 
     def press(self,e):
         if self.type == 2:
             self.helper.coords = frieze.repeat(900,120, 1.5,
                                     self.sym, (e.x, e.y))
+            if self.tool in [0,1,2,4]:
+                self.helper.coordsList = self.helper.coords
         self.width = self.widthS.get()
 
     def move(self, e):
@@ -99,7 +161,9 @@ class Draw:
                                         self.sym, (e.x, e.y))
                 for i in range(len(coords)):
                     self.cv.create_line(self.helper.coords[i][0],self.helper.coords[i][1],
-                                        coords[i][0],coords[i][1], width=self.width)
+                                        coords[i][0],coords[i][1], width=self.width,
+                                        fill=self.color, tag='temp')
+                    self.helper.coordsList[i] += coords[i]
 
                 self.helper.coords = coords
             elif self.tool == self.toolname['line']:
@@ -108,12 +172,56 @@ class Draw:
                                         self.sym, (e.x, e.y))
                 for i in range(len(coords)):
                     self.cv.create_line(self.helper.coords[i][0],self.helper.coords[i][1],
-                                        coords[i][0],coords[i][1], width=self.width, tag='temp')
+                                        coords[i][0],coords[i][1], width=self.width,
+                                        fill=self.color, tag='temp')
+            elif self.tool == self.toolname['eraser']:
+                coords = frieze.repeat(900,120, 1.5,
+                                        self.sym, (e.x, e.y))
+                for i in range(len(coords)):
+                    self.cv.create_line(self.helper.coords[i][0],self.helper.coords[i][1],
+                                        coords[i][0],coords[i][1], width=self.width,
+                                        fill='white', tag='temp')
+                    self.helper.coordsList[i] += coords[i]
+
+                self.helper.coords = coords
 
     def release(self, e):
-        # PIL draw image
+        im = self.helper.im.copy()
+        draw = ImageDraw.Draw(im)
+        if self.tool == self.toolname['pen']:
+            for i in range(len(self.helper.coordsList)):
+                draw.line(self.helper.coordsList[i], fill=str2hex(self.color)
+                , width=self.width)
+        elif self.tool == self.toolname['line']:
+            if self.type==2:
+                coords = frieze.repeat(900,120, 1.5,
+                                        self.sym, (e.x, e.y))
+            for i in range(len(coords)):
+                draw.line((self.helper.coords[i][0],self.helper.coords[i][1],
+                                    coords[i][0],coords[i][1]), width=self.width,
+                                    fill=str2hex(self.color))
+        elif self.tool == self.toolname['fill']:
+            if self.type==2:
+                coords = frieze.repeat(900,120, 1.5,
+                                        self.sym, (e.x, e.y))
+            pic = im.load()
+            target = pic[e.x, e.y]
+            for i in range(len(coords)):
+                self.fill(pic, str2hex(self.color), target,
+                            coords[i][0], coords[i][1])
+        elif self.tool == self.toolname['eraser']:
+            for i in range(len(self.helper.coordsList)):
+                draw.line(self.helper.coordsList[i], fill=(255,255,255,0), width=self.width)
+        self.helper.new_im(im)
+        self.draw()
 
     def hover(self, e):
         pass
+
+    def grid(self):
+        pass
+
+def str2hex(s):
+    return (int(s[1:3],16), int(s[3:5],16), int(s[5:7],16))
 
 Draw(640,480, 2, 0)
