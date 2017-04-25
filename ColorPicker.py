@@ -1,15 +1,14 @@
 #   Color picker module
 #   Code designed by: Mohammed Nurul Hoque (andrewID: mnurulho)
 #
-#   15-112: Principles of Programming and Computer Science at Carnegie Mellon University in Qatar
-#   Term Project
-#
 #   File created on: Sunday 13 of November 2016, 09:03 PM
 #   Modification History
 #   Start:          End:
 #   13/11/16 09:03  13/11/16 09:00
 #   17/11/16 17:45  17/11/16 18:02
 #   24/11/16 12:20  24/11/16 12:30
+
+# This module was created for 15-112 term project in Fall 2016
 
 import Tkinter
 from PIL import Image,ImageTk

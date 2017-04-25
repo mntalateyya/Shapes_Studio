@@ -3,6 +3,16 @@ from PIL import Image, ImageDraw, ImageTk
 import frieze
 import ColorPicker
 
+# Looking at Shapes 62-238
+# Term Project
+# Mohammed Nurul Hoque - Mohammed Yusuf Ansari
+
+# creator: Mohammed Nurul Hoque
+# editors: Mohammed Nurul Hoque
+
+# created on 22/4/2017
+# last modified on 24/4/2017
+
 class Helper:
     def __init__(self, im):
         self.x = 0
@@ -28,7 +38,7 @@ class Helper:
 
 
 class Draw:
-    def __init__(self, x, y, t, s):
+    def __init__(self, t, s):
         self.root = Tkinter.Toplevel()
         self.root.geometry('960x%d'%(240 if t==2 else 680))
         self.tframe = Tkinter.Frame(self.root, width=960, height=60)
@@ -223,5 +233,3 @@ class Draw:
 
 def str2hex(s):
     return (int(s[1:3],16), int(s[3:5],16), int(s[5:7],16))
-
-Draw(640,480, 2, 0)
