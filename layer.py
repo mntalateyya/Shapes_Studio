@@ -18,8 +18,9 @@ class Layer:
         self.photo2 = ImageTk.PhotoImage(Image.open('Resources/delete.bmp'))
         self.delete = self.cv.create_image(100, 20, image=self.photo2)
 
-wnd = Tkinter.Tk()
+'''wnd = Tkinter.Tk()
 im = Image.new("RGB", (500, 100), "red")
 c = Layer(im, wnd, None)
 c.cv.pack()
 wnd.mainloop()
+'''

@@ -38,7 +38,7 @@ class Helper:
 
 
 class Draw:
-    def __init__(self, t, s):
+    def __init__(self, t, s, parent):
         self.root = Tkinter.Toplevel()
         self.root.geometry('960x%d'%(240 if t==2 else 680))
         self.tframe = Tkinter.Frame(self.root, width=960, height=60)
@@ -119,7 +119,6 @@ class Draw:
         self.dot = self.tools.create_oval(162,47,168,53,
                     fill='#888888', width=0)
         self.width = self.widthS.get()
-        self.root.mainloop()
 
     def draw(self):
         self.cv.delete(Tkinter.ALL)
