@@ -3,7 +3,7 @@ from math import *
 
 
 def repeat_wallpaper(cw, ch, cell_w,cell_h, s, (x, y)):
-    # canvas width, canvas , vell width, cell height, mode
+    # canvas width, canvas height, width:height ratio of cell,
     # symmetry type, (x,y) of mouse
     coords = []
     if s == 0:  # p1
