@@ -15,6 +15,8 @@ class Main:
         self.wnd = Tkinter.Toplevel()
         self.parent = parent
 
+        self.im = None
+
         self.frame1 = Tkinter.Frame(self.wnd)
         self.frame2 = Tkinter.Frame(self.frame1)
         self.frame3 = Tkinter.Frame(self.wnd)

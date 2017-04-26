@@ -1,6 +1,6 @@
 import Tkinter
 from PIL import Image, ImageDraw, ImageTk
-import frieze
+import frieze, wallpaper_patterns
 import ColorPicker
 
 # Looking at Shapes 62-238
@@ -40,6 +40,7 @@ class Helper:
 class Draw:
     def __init__(self, t, s, parent):
         self.root = Tkinter.Toplevel()
+        self.parent = parent
         self.root.geometry('960x%d'%(240 if t==2 else 680))
         self.tframe = Tkinter.Frame(self.root, width=960, height=60)
         self.tframe.grid()
@@ -55,7 +56,7 @@ class Draw:
         self.tools = Tkinter.Canvas(self.tframe, width=960, height=60,
                                     bg='#cccccc',highlightthickness=0, border=0)
         self.cvw = 900
-        self.cvh = 120 if (t==2) else 590
+        self.cvh = 120 if (t==2) else 600
         self.cv = Tkinter.Canvas(self.cframe, width=self.cvw,
                                 height=self.cvh, bg='white')
         self.tools.pack()
@@ -106,7 +107,8 @@ class Draw:
                                         ColorPicker.ColorPicker(self, self.color))
 
         self.labels.append(ImageTk.PhotoImage(Image.open('Resources/finish.bmp')))
-        self.tools.create_image(840, 15, image=self.labels[-1],anchor=Tkinter.NW)
+        self.end = self.tools.create_image(840, 15, image=self.labels[-1],anchor=Tkinter.NW)
+        self.tools.tag_bind(self.end, '<ButtonRelease-1>', self.finish)
 
         self.cv.bind('<Button-1>', self.press)
         self.cv.bind('<B1-Motion>', self.move)
@@ -156,17 +158,76 @@ class Draw:
                         stack += [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
 
     def press(self,e):
-        if self.type == 2:
-            self.helper.coords = frieze.repeat(900,120, 1.5,
+        if self.type ==0:
+            self.helper.x =e.x; self.helper.y=e.y
+            self.helper.coords = [(e.x, e.y)]
+        elif self.type ==1:
+            self.helper.coords = wallpaper_patterns.repeat_wallpaper(self.cvw,self.cvh, 100, 60,
+                                    self.sym, (e.x, e.y))
+            if self.tool in [0,1,2,4]:
+                self.helper.coordsList = self.helper.coords
+        elif self.type == 2:
+            self.helper.coords = frieze.repeat(self.cvw,self.cvh, 1.5,
                                     self.sym, (e.x, e.y))
             if self.tool in [0,1,2,4]:
                 self.helper.coordsList = self.helper.coords
         self.width = self.widthS.get()
 
     def move(self, e):
+        if self.type == 0:
+            if self.tool == self.toolname['pen']:
+                self.cv.create_line(self.helper.x,self.helper.y,
+                 e.x,e.y,width=self.width,
+                fill=self.color, tag='temp')
+                self.helper.x =e.x; self.helper.y=e.y
+                self.helper.coords.append((e.x, e.y))
+            elif self.tool == self.toolname['line']:
+                self.cv.delete('temp')
+                self.cv.create_line(self.helper.x,self.helper.y, e.x,e.y,width=self.width,
+                fill=self.color, tag='temp')
+            elif self.tool == self.toolname['eraser']:
+                self.cv.create_line(self.helper.x,self.helper.y,
+                 e.x,e.y,width=self.width,
+                fill='#ffffff', tag='temp')
+                self.helper.x =e.x; self.helper.y=e.y
+                self.helper.coords.append((e.x, e.y))
+
+        if self.type == 1:
+            try:
+                if self.tool == self.toolname['pen']:
+                    coords = wallpaper_patterns.repeat_wallpaper(self.cvw, self.cvh, 100, 60,
+                                            self.sym, (e.x, e.y))
+                    for i in range(len(coords)):
+                        self.cv.create_line(self.helper.coords[i][0],self.helper.coords[i][1],
+                                            coords[i][0],coords[i][1], width=self.width,
+                                            fill=self.color, tag='temp')
+                        self.helper.coordsList[i] += coords[i]
+
+                    self.helper.coords = coords
+                elif self.tool == self.toolname['line']:
+                    self.cv.delete('temp')
+                    coords = wallpaper_patterns.repeat_wallpaper(self.cvw, self.cvh, 100, 60,
+                                            self.sym, (e.x, e.y))
+                    for i in range(len(coords)):
+                        self.cv.create_line(self.helper.coords[i][0],self.helper.coords[i][1],
+                                            coords[i][0],coords[i][1], width=self.width,
+                                            fill=self.color, tag='temp')
+                elif self.tool == self.toolname['eraser']:
+                    coords = wallpaper_patterns.repeat_wallpaper(self.cvw, self.cvh, 100, 60,
+                                            self.sym, (e.x, e.y))
+                    for i in range(len(coords)):
+                        self.cv.create_line(self.helper.coords[i][0],self.helper.coords[i][1],
+                                            coords[i][0],coords[i][1], width=self.width,
+                                            fill='white', tag='temp')
+                        self.helper.coordsList[i] += coords[i]
+
+                    self.helper.coords = coords
+            except:
+                pass
+
         if self.type == 2:
             if self.tool == self.toolname['pen']:
-                coords = frieze.repeat(900,120, 1.5,
+                coords = frieze.repeat(self.cvw, self.cvh, 1.5,
                                         self.sym, (e.x, e.y))
                 for i in range(len(coords)):
                     self.cv.create_line(self.helper.coords[i][0],self.helper.coords[i][1],
@@ -177,14 +238,14 @@ class Draw:
                 self.helper.coords = coords
             elif self.tool == self.toolname['line']:
                 self.cv.delete('temp')
-                coords = frieze.repeat(900,120, 1.5,
+                coords = frieze.repeat(self.cvw, self.cvh, 1.5,
                                         self.sym, (e.x, e.y))
                 for i in range(len(coords)):
                     self.cv.create_line(self.helper.coords[i][0],self.helper.coords[i][1],
                                         coords[i][0],coords[i][1], width=self.width,
                                         fill=self.color, tag='temp')
             elif self.tool == self.toolname['eraser']:
-                coords = frieze.repeat(900,120, 1.5,
+                coords = frieze.repeat(self.cvw, self.cvh, 1.5,
                                         self.sym, (e.x, e.y))
                 for i in range(len(coords)):
                     self.cv.create_line(self.helper.coords[i][0],self.helper.coords[i][1],
@@ -197,30 +258,70 @@ class Draw:
     def release(self, e):
         im = self.helper.im.copy()
         draw = ImageDraw.Draw(im)
-        if self.tool == self.toolname['pen']:
-            for i in range(len(self.helper.coordsList)):
-                draw.line(self.helper.coordsList[i], fill=str2hex(self.color)
+        if self.type==0:
+            if self.tool == self.toolname['pen']:
+                draw.line(self.helper.coords, fill=str2hex(self.color)
                 , width=self.width)
-        elif self.tool == self.toolname['line']:
-            if self.type==2:
-                coords = frieze.repeat(900,120, 1.5,
+            elif self.tool == self.toolname['line']:
+                draw.line((self.helper.x, self.helper.y, e.x, e.y),
+                fill=str2hex(self.color), width=self.width)
+            elif self.tool == self.toolname['eraser']:
+                draw.line(self.helper.coords, fill=(255,255,255,0)
+                , width=self.width)
+            elif self.tool == self.toolname['fill']:
+                pic = im.load()
+                self.fill(pic, str2hex(self.color), pic[e.x, e.y], e.x, e.y)
+
+        if self.type==1:
+            try:
+                if self.tool == self.toolname['pen']:
+                    for i in range(len(self.helper.coordsList)):
+                        draw.line(self.helper.coordsList[i], fill=str2hex(self.color)
+                        , width=self.width)
+                elif self.tool == self.toolname['line']:
+                    coords = wallpaper_patterns.repeat_wallpaper(self.cvw, self.cvh, 100, 60,
+                                            self.sym, (e.x, e.y))
+                    for i in range(len(coords)):
+                        draw.line((self.helper.coords[i][0],self.helper.coords[i][1],
+                                                coords[i][0],coords[i][1]), width=self.width,
+                                                fill=str2hex(self.color))
+                elif self.tool == self.toolname['fill']:
+                    coords = wallpaper_patterns.repeat_wallpaper(self.cvw, self.cvh, 100, 60,
+                                            self.sym, (e.x, e.y))
+                    pic = im.load()
+                    target = pic[e.x, e.y]
+                    for i in range(len(coords)):
+                        self.fill(pic, str2hex(self.color), target,
+                                    coords[i][0], coords[i][1])
+                elif self.tool == self.toolname['eraser']:
+                    for i in range(len(self.helper.coordsList)):
+                        draw.line(self.helper.coordsList[i], fill=(255,255,255,0), width=self.width)
+            except:
+                pass
+
+        if self.type==2:
+            if self.tool == self.toolname['pen']:
+                for i in range(len(self.helper.coordsList)):
+                    draw.line(self.helper.coordsList[i], fill=str2hex(self.color)
+                    , width=self.width)
+            elif self.tool == self.toolname['line']:
+                coords = frieze.repeat(self.cvw, self.cvh, 1.5,
                                         self.sym, (e.x, e.y))
-            for i in range(len(coords)):
-                draw.line((self.helper.coords[i][0],self.helper.coords[i][1],
-                                    coords[i][0],coords[i][1]), width=self.width,
-                                    fill=str2hex(self.color))
-        elif self.tool == self.toolname['fill']:
-            if self.type==2:
-                coords = frieze.repeat(900,120, 1.5,
+                for i in range(len(coords)):
+                    draw.line((self.helper.coords[i][0],self.helper.coords[i][1],
+                                            coords[i][0],coords[i][1]), width=self.width,
+                                            fill=str2hex(self.color))
+            elif self.tool == self.toolname['fill']:
+                coords = frieze.repeat(self.cvw, self.cvh, 1.5,
                                         self.sym, (e.x, e.y))
-            pic = im.load()
-            target = pic[e.x, e.y]
-            for i in range(len(coords)):
-                self.fill(pic, str2hex(self.color), target,
-                            coords[i][0], coords[i][1])
-        elif self.tool == self.toolname['eraser']:
-            for i in range(len(self.helper.coordsList)):
-                draw.line(self.helper.coordsList[i], fill=(255,255,255,0), width=self.width)
+                pic = im.load()
+                target = pic[e.x, e.y]
+                for i in range(len(coords)):
+                    self.fill(pic, str2hex(self.color), target,
+                                coords[i][0], coords[i][1])
+            elif self.tool == self.toolname['eraser']:
+                for i in range(len(self.helper.coordsList)):
+                    draw.line(self.helper.coordsList[i], fill=(255,255,255,0), width=self.width)
         self.helper.new_im(im)
         self.draw()
 
@@ -229,6 +330,10 @@ class Draw:
 
     def grid(self):
         pass
+
+    def finish(self, e):
+        self.parent.add_layer(self.helper.im)
+        self.root.destroy()
 
 def str2hex(s):
     return (int(s[1:3],16), int(s[3:5],16), int(s[5:7],16))
