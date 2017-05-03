@@ -39,7 +39,7 @@ class Main:
         # L-sys instance to generate from seed tree
         self.L_sys = L_sys()
         self.L_sys.make_alphabet('FLR[]X')
-
+        self.iter_c = Tkinter.IntVar()
         self.all = Tkinter.Radiobutton(self.frame2, text='Iterate over edges',
                                        variable=self.iter_c, value=0)
         self.all.pack()
@@ -52,7 +52,6 @@ class Main:
         slabel.pack()
 
         # choose number of iterations from a scale
-        self.iter_c = Tkinter.IntVar()
         self.num = Tkinter.Scale(self.frame2, from_=1, to=7, orient=Tkinter.HORIZONTAL)
         self.num.pack()
         Tkinter.Label(self.frame2, text='').pack()
