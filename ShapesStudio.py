@@ -33,7 +33,8 @@ class Meta:
 
     # changes focus layer (on click)
     def change_focus(self, layer):
-        self.layer_thumb[self.focus].lose_focus() # loose old focus
+        if self.focus< len(self.layer_thumb):
+            self.layer_thumb[self.focus].lose_focus() # loose old focus
         if layer in self.layer_thumb:
             self.focus = self.layer_thumb.index(layer)
         elif self.layer_thumb:
@@ -46,6 +47,7 @@ class Meta:
     def del_layer(self, layer):
         i = self.layer_thumb.index(layer)
         self.layer_thumb[i].cv.pack_forget()
+        self.layer_thumb.pop(i)
         self.layers.pop(i)
         self.layerscoords.pop(i)
         self.change_focus(layer)
@@ -94,6 +96,8 @@ class Main:
                     relief=Tkinter.FLAT, command=lambda:L_sys_Main.Main(self.meta))
         frac.pack(side=Tkinter.LEFT, padx=5, pady=10)
 
+        self.imcoords = (0,0)
+
         self.photos = []
         self.root.mainloop()
 
@@ -109,7 +113,6 @@ class Main:
     # on press save current pos to calculate offset at move
     def press(self, e):
         if self.meta.layers:
-            if self.focus==-1: self.focus=0
             self.x = e.x
             self.y = e.y
             self.imcoords = self.meta.layerscoords[self.meta.focus]
