@@ -128,5 +128,6 @@ class Main:
         return im
 
     def finish(self):
-        self.parent.add_layer(self.im)
-        self.wnd.destroy()
+        if self.im:
+            self.parent.add_layer(self.im)
+            self.wnd.destroy()
