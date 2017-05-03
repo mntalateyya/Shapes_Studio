@@ -7,5 +7,6 @@ Required:
 Modules used:
 	Tkinter, PIL (Pillow fork)
 
+To run the app, run ShapesStudio.py
 ====================================
 To use the curve tool drag the mouse from the starting point to the end point of the curve, then release the mouse and move to the anchor point of the curve, then click once.
