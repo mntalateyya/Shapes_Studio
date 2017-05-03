@@ -13,7 +13,7 @@ def repeat_wallpaper(cw, ch, cell_w,cell_h, s, (x, y)):
             x = x%int(cell_w)
         y %= int(cell_h)
         coords = [(x, y)]
-        while coords[-1][0] < cw+1:
+        for j in range(cw/cell_w+1):
             coords += [(int(i[0] + cell_w), i[1]) for i in coords[-1:]]
 
         count=int(ceil(float(ch)/cell_h))
@@ -32,7 +32,7 @@ def repeat_wallpaper(cw, ch, cell_w,cell_h, s, (x, y)):
         y %= int(cell_h)
         coords = [(x, y)]
         coords += [(int( 2*cell_w - i[0] - 1), i[1]) for i in coords[-1:]]
-        while coords[-1][0] < cw+1:
+        for j in range(cw/cell_w+1):
             coords += [(int(i[0] + cell_w), i[1]) for i in coords[-2:]]
 
         count=int(ceil(float(ch)/cell_h))
@@ -52,7 +52,7 @@ def repeat_wallpaper(cw, ch, cell_w,cell_h, s, (x, y)):
         coords = [(x, y)]
         coords += [(int( cell_w - i[0] - 1), int(cell_h - i[1] -1)) for i in coords[-1:]]
 
-        while coords[-1][0] < cw+1:
+        for j in range(cw/cell_w+1):
             coords += [(int(i[0] + cell_w), i[1]) for i in coords[-2:]]
 
         count=int(ceil(float(ch)/cell_h))
@@ -69,7 +69,7 @@ def repeat_wallpaper(cw, ch, cell_w,cell_h, s, (x, y)):
         coords = [(x, y)]
         coords += [(x, 2*cell_h - y - 1)]
         coords += [(int(2*cell_w - i[0] - 1), i[1]) for i in coords[-2:]]
-        while coords[-1][0] < cw:
+        for j in range(cw/cell_w/2+1):
             coords += [(int(i[0] + 2*cell_w), i[1]) for i in coords[-4:]]
 
         count=int(ceil(float(ch)/cell_h))
@@ -84,7 +84,7 @@ def repeat_wallpaper(cw, ch, cell_w,cell_h, s, (x, y)):
         y = y%int(cell_h)
         coords = [(x, y)]
         coords += [(int( 2*cell_w - i[0] - 1), i[1]) for i in coords[-1:]]
-        while coords[-1][0] < cw:
+        for j in range(cw/cell_w/2+1):
             coords += [(int(i[0] + 2*cell_w), i[1]) for i in coords[-2:]]
 
         count=int(ceil(float(ch)/cell_h))
@@ -98,7 +98,7 @@ def repeat_wallpaper(cw, ch, cell_w,cell_h, s, (x, y)):
         y = y%int(cell_h)
         coords = [(x, y)]
         coords += [(int(cell_w - x - 1), cell_h - y - 1)]
-        while coords[-1][0] < cw+1:
+        for j in range(cw/cell_w+1):
             coords += [(int(cell_w + i[0]), cell_h - i[1] - 1) for i in coords[-2:]]
 
         count=int(ceil(float(ch)/cell_h))
@@ -115,7 +115,7 @@ def repeat_wallpaper(cw, ch, cell_w,cell_h, s, (x, y)):
         coords += [(i[0], int(2*cell_h - i[1] -1)) for i in coords[-2:]]
         coords += [(int(2*cell_w - i[0] -1), i[1]) for i in coords[-4:]]
 
-        while coords[-1][0] < cw+1:
+        for j in range(cw/cell_w/2+1):
             coords += [(int(i[0] + 2*cell_w), i[1]) for i in coords[-8:]]
 
         count=int(ceil(float(ch)/cell_h))

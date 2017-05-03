@@ -3,6 +3,7 @@ from PIL import Image,ImageDraw,ImageTk
 import Tree_Repr
 import Event_Tree
 from L_sys import L_sys
+import time
 
 NODE_FILL = 'blue'  # color of idle nodes
 NODE_FILL_ACTIVE = 'purple'  # color of active node
@@ -78,36 +79,39 @@ class Main:
         self.imc.create_image(450,300,image=self.photo)
 
     def draw(self,s):
-        im = Image.new('RGBA', (3000,2000))
+        im = Image.new('RGBA', (3000,2000)) # create large image (resize later)
         draw = ImageDraw.Draw(im)
         dir = 0  # absolute direction of drawing
-        vec = (0.0, -1.0)  # vector to represent direction of drawing
+
+        # all possible direction unit vectors
+        vectors = {}
+        for i in range(24):
+            vectors[i] = (math.cos(((i - 6) % 24) * math.pi / 12), math.sin(((i - 6) % 24) * math.pi / 12))
         stack = []  # stack to aid parenthesizing
         coords = (1500, 1000)  # current position of pen
         for i in range(len(s)):
             if s[i] == '[':
-                stack.append((coords[0], coords[1], vec[0], vec[1], dir))  # store current position
+                stack.append((coords[0], coords[1], dir))  # store current position
             elif s[i] == ']':
                 # restore positions from stack
                 popped = stack.pop()
                 coords = popped[:2]
-                vec = popped[2:4]
-                dir = popped[4]
+                dir = popped[2]
             elif s[i] == 'R':
-                # update direction and vector of direction
+                # update direction
                 dir = (dir + 1) % 24
-                vec = (math.cos(((dir - 6) % 24) * math.pi / 12), math.sin(((dir - 6) % 24) * math.pi / 12))
             elif s[i] == 'L':
-                # update direction and vector of direction
+                # update direction
                 dir = (dir - 1) % 24
-                vec = (math.cos(((dir - 6) % 24) * math.pi / 12), math.sin(((dir - 6) % 24) * math.pi / 12))
             elif s[i] == 'F':
-                # draw line and node
+                # retrieve direction vector and draw line
+                vec = vectors[dir]
                 draw.line((coords[0], coords[1],
                                      coords[0] + EDGE_LEN * vec[0], coords[1] + EDGE_LEN * vec[1]),fill='blue')
                 coords = (coords[0] + EDGE_LEN * vec[0], coords[1] + EDGE_LEN * vec[1])
-        if im.getbbox():
+        if im.getbbox():    # crop white areas
             im = im.crop(im.getbbox())
+        # resize large image
         width, height = im.size
         if width>height*1.5 and width>900:
             im = im.resize((900, int(900.0*height/width)),Image.ANTIALIAS)
