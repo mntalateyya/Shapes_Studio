@@ -33,6 +33,7 @@ class Ev_Handler:
         self.cv = cv
 
     def on_click(self, e):
+        # get nearest node and set focus to add as parent of new edge and node
         if self.state == 0:
             v = self.cv.find_enclosed(e.x - RAD * 3, e.y - RAD * 3, e.x + RAD * 3, e.y + RAD * 3)
             if v:
@@ -40,6 +41,7 @@ class Ev_Handler:
                 self.enfocus(v)
                 self.cv.bind('<Motion>', self.on_move)
                 self.state = 1
+        # add new edge and node and reset focus
         else:
             self.tree.add_v(self.dir, self.focus)
             self.enfocus(-1)
@@ -48,11 +50,13 @@ class Ev_Handler:
             self.cv.unbind('<Motion>')
             self.state = 0
 
+    # on drag calculate the current angle from parent
     def on_move(self, e):
         center = [x + RAD for x in self.cv.coords(self.focus)][0:2]
         angle = get_angle(e.x, e.y, center[0], center[1])
         self.dir = int(round(12 * angle / math.pi) + 6) % 24
 
+    # set focus
     def enfocus(self, v):
         self.cv.itemconfig(self.focus, fill=NODE_FILL)
         self.cv.itemconfig(v, fill=NODE_FILL_ACTIVE)

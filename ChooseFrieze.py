@@ -2,6 +2,8 @@ import Tkinter
 from PIL import ImageTk, Image
 import DrawMain
 
+# This class creates window that allows the user to choose a frieze pattern
+
 class ChooseFrieze:
     def __init__(self, parent):
         self.root = Tkinter.Toplevel()
@@ -48,6 +50,7 @@ class ChooseFrieze:
         self.cv.tag_bind(ids[-1], '<Button-1>', lambda e: self.start(6))
         self.root.mainloop()
 
+    # click on a thumbnail -> start drawing canvas
     def start(self, i):
         DrawMain.Draw(2, i, self.meta)
         self.root.destroy()

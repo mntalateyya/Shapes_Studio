@@ -9,7 +9,7 @@ NODE_FILL = 'blue'  # color of idle nodes
 NODE_FILL_ACTIVE = 'purple'  # color of active node
 EDGE_FILL = 'black'  # color of edges
 EDGE_LEN = 30
-RAD = 3  # radium of node drawing
+RAD = 3  # radius of node drawing
 
 class Main:
     def __init__(self, parent):
@@ -18,6 +18,7 @@ class Main:
 
         self.im = None
 
+        # layout fames
         self.frame1 = Tkinter.Frame(self.wnd)
         self.frame2 = Tkinter.Frame(self.frame1)
         self.frame3 = Tkinter.Frame(self.wnd)
@@ -28,15 +29,17 @@ class Main:
         self.cv = Tkinter.Canvas(self.frame1, width=300, height=400, bg='white')
         self.cv.grid()
 
+        # Tree_repr class to hold tree representtion
+        # e_hand class to handle canvas events
         self.tree = Tree_Repr.Tree(self.cv)
         self.e_hand = Event_Tree.Ev_Handler(self.tree, self.cv)
         self.tree.draw()
         self.cv.bind('<Button-1>', self.e_hand.on_click)
 
+        # L-sys instance to generate from seed tree
         self.L_sys = L_sys()
         self.L_sys.make_alphabet('FLR[]X')
 
-        self.iter_c = Tkinter.IntVar()
         self.all = Tkinter.Radiobutton(self.frame2, text='Iterate over edges',
                                        variable=self.iter_c, value=0)
         self.all.pack()
@@ -44,9 +47,12 @@ class Main:
                                        variable=self.iter_c, value=1)
         self.leaf.pack()
         Tkinter.Label(self.frame2, text='').pack()
+
         slabel = Tkinter.Label(self.frame2, text='# Iterations:')
         slabel.pack()
 
+        # choose number of iterations from a scale
+        self.iter_c = Tkinter.IntVar()
         self.num = Tkinter.Scale(self.frame2, from_=1, to=7, orient=Tkinter.HORIZONTAL)
         self.num.pack()
         Tkinter.Label(self.frame2, text='').pack()
@@ -54,6 +60,7 @@ class Main:
         self.bframe = Tkinter.Frame(self.frame2)
         self.bframe.pack()
 
+        # control buttons
         self.undo = Tkinter.Button(self.bframe, text='Undo', command=self.tree.undo)
         self.undo.grid(padx=20)
         self.clearB = Tkinter.Button(self.bframe, text='Clear', command=self.reset)
@@ -70,6 +77,7 @@ class Main:
         self.tree.reset()
 
     def gen(self):
+        # generate L-sys tree and draw
         self.L_sys.make_seed(self.tree.get_string(self.iter_c.get()))
         self.L_sys.make_rule('X',self.tree.get_string(self.iter_c.get()))
         for i in range(self.num.get()):
@@ -79,6 +87,7 @@ class Main:
         self.imc.create_image(450,300,image=self.photo)
 
     def draw(self,s):
+        # create PIL Image instance of L-system string
         im = Image.new('RGBA', (3000,2000)) # create large image (resize later)
         draw = ImageDraw.Draw(im)
         dir = 0  # absolute direction of drawing

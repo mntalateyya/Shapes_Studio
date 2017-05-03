@@ -24,23 +24,24 @@ class Helper:
         self.x = 0
         self.y = 0
         self.x2, self.y2, self.xa, self.ya = 0,0,0,0 # for curves
-        self.coords = []
-        self.coordsList = []
+        self.coords = []    # store sequence of coordinats
+        self.coordsList = []    # store lists of sequences
 
         self.im = im
         self.undostack = []
         self.redostack = []
-
+    # draw a new image, push old to undo stack, empty redo stack
     def new_im(self,im):
         self.redostack = []
         self.undostack.append(self.im)
         self.im = im
-
+    # undo, and push current to redo stack
     def undo(self):
         if self.undostack:
             self.redostack.append(self.im)
             self.im = self.undostack.pop()
 
+    # redo, push current to undo stack
     def redo(self):
         if self.redostack:
             self.undostack.append(self.im)
@@ -59,13 +60,14 @@ class Draw:
         self.cvh = 120 if (t==2) else 600
 
         self.helper = Helper(Image.new('RGBA',(self.cvw, self.cvh), (255,255,255,0)))
+
         self.toolname = {'pen':0, 'line':1, 'curve':2, 'fill':3, 'eraser':4}
 
         self.tframe = Tkinter.Frame(self.root, width=960, height=60)
         self.tframe.grid()
         self.cframe = Tkinter.Frame(self.root)
         self.cframe.grid()
-
+        # tools canvas and drawing canvas
         self.tools = Tkinter.Canvas(self.tframe, width=960, height=60,
                                     bg='#cccccc',highlightthickness=0, border=0)
         self.cv = Tkinter.Canvas(self.cframe, width=self.cvw,
@@ -113,6 +115,7 @@ class Draw:
         self.tools.create_window(540, 5, window=self.widthS, anchor=Tkinter.NW)
 
         self.color = '#000000'
+
         self.tools.create_text(690,30,text='Color', fill='slate gray')
         self.colbox = self.tools.create_oval(720, 15, 750, 45, fill=self.color, width=3)
         self.tools.tag_bind(self.colbox, '<Button-1>', lambda e:
@@ -122,6 +125,7 @@ class Draw:
         self.end = self.tools.create_image(840, 15, image=self.labels[-1],anchor=Tkinter.NW)
         self.tools.tag_bind(self.end, '<ButtonRelease-1>', self.finish)
 
+        # a dot showing the currently active tool
         self.dot = self.tools.create_oval(162,47,168,53,
                     fill='#888888', width=0)
 
@@ -136,6 +140,7 @@ class Draw:
         self.cv.bind('<Motion>', self.hover)
 
     def draw(self):
+        # draw current image on canvas and grid
         self.cv.delete(Tkinter.ALL)
         self.labels.append(ImageTk.PhotoImage(self.helper.im))
         self.cv.create_image(0, 0, image=self.labels[-1], anchor=Tkinter.NW)
@@ -156,9 +161,10 @@ class Draw:
 
     def change_tool(self, t, x):
         self.tool = t
-        self.tools.coords(self.dot,x-3,47,x+3,53)
+        self.tools.coords(self.dot,x-3,47,x+3,53) # active tool dot
 
     def fill(self, pic, color, target, x, y):
+        # fill using an explicit stack
         if 0<x<self.cvw and 1<y<self.cvh:
             stack = [(x,y)]
             while stack:
@@ -173,19 +179,21 @@ class Draw:
                 if y<self.cvh-1 and pic[x, y+1]==target:
                     stack.append((x, y+1))
 
-
+    # method to handle all press events
     def press(self,e):
-        if self.type ==0:
+        if self.type ==0:   # free draw
             self.helper.x =e.x; self.helper.y=e.y # save current mouse pos
             self.helper.coords = [(e.x, e.y)]   # current is first point in line
-        elif self.type ==1:
+
+        elif self.type ==1: # wallpaper
             self.helper.x =e.x; self.helper.y=e.y
             # save points corresponding to current in every cell
             self.helper.coords = wallpaper_patterns.repeat_wallpaper(self.cvw,self.cvh,
                     WALL_P_W, WALL_P_H, self.sym, (e.x, e.y))
             if self.tool in [0,1,4]: # except fill and curve
                 self.helper.coordsList = self.helper.coords
-        elif self.type == 2:
+
+        elif self.type == 2:    # frieze
             self.helper.x =e.x; self.helper.y=e.y
             # save points corresponding to current in every cell
             self.helper.coords = frieze.repeat(self.cvw,self.cvh, FRIEZE_R,
@@ -194,30 +202,37 @@ class Draw:
                 self.helper.coordsList = self.helper.coords
         self.width = self.widthS.get()
 
+    # method to handle all move with button pressed events
     def move(self, e):
         if self.type == 0:
             if self.tool == self.toolname['pen']:
+                # draw line from last position to current
                 self.cv.create_line(self.helper.x,self.helper.y,
                  e.x,e.y,width=self.width,
                 fill=self.color, tag='temp')
+                # save current & add to sequence of coords
                 self.helper.x =e.x; self.helper.y=e.y
                 self.helper.coords.append((e.x, e.y))
             elif self.tool == self.toolname['line']:
+                # draw line from initial pos to current
                 self.cv.delete('temp')
                 self.cv.create_line(self.helper.x,self.helper.y, e.x,e.y,width=self.width,
                 fill=self.color, tag='temp')
             elif self.tool == self.toolname['curve'] and self.helper.state==0:
+                # draw line from initial pos to current (for guidance only)
                 self.cv.delete('temp')
                 self.cv.create_line(self.helper.x,self.helper.y, e.x,e.y,width=self.width,
                 fill=self.color, tag='temp')
             elif self.tool == self.toolname['eraser']:
+                # draw line (white transparent line)
                 self.cv.create_line(self.helper.x,self.helper.y,
                  e.x,e.y,width=self.width,
                 fill='#ffffff', tag='temp')
                 self.helper.x =e.x; self.helper.y=e.y
                 self.helper.coords.append((e.x, e.y))
 
-        if self.type == 1:
+        if self.type == 1:  # wallpaper
+        # generate all coords & draw line
             if self.tool == self.toolname['pen']:
                 coords = wallpaper_patterns.repeat_wallpaper(self.cvw, self.cvh,
                         WALL_P_W, WALL_P_H, self.sym, (e.x, e.y))
@@ -253,7 +268,8 @@ class Draw:
 
                 self.helper.coords = coords
 
-        if self.type == 2:
+        if self.type == 2:  # frieze
+        # generate all coords and draw lines
             if self.tool == self.toolname['pen']:
                 coords = frieze.repeat(self.cvw, self.cvh, FRIEZE_R,
                                         self.sym, (e.x, e.y))
@@ -290,10 +306,13 @@ class Draw:
 
                 self.helper.coords = coords
 
+    # method to handle all button release events
     def release(self, e):
+        # make a copy of current image (to facilitate undo)
         im = self.helper.im.copy()
+        # make PIL draw instance to draw the lines
         draw = ImageDraw.Draw(im)
-        if self.type==0:
+        if self.type==0:    # free draw
             if self.tool == self.toolname['pen']:
                 draw.line(self.helper.coords, fill=str2hex(self.color)
                 , width=self.width)
@@ -303,9 +322,11 @@ class Draw:
                 fill=str2hex(self.color), width=self.width)
 
             elif self.tool == self.toolname['curve']:
+                # in state 0, at release, the end pos is saved
                 if self.helper.state==0 and (self.helper.x, self.helper.y)!=(e.x,e.y):
                     self.helper.x2, self.helper.y2 = e.x,e.y
                     self.helper.state=1
+                # in state 1, at release, the curve is drawn
                 elif self.helper.state==1:
                     draw.line(self.helper.coordsList,fill=str2hex(self.color),
                             width=self.width)
@@ -316,10 +337,10 @@ class Draw:
                 , width=self.width)
 
             elif self.tool == self.toolname['fill']:
-                pic = im.load()
+                pic = im.load() # load image to memory
                 self.fill(pic, str2hex(self.color), pic[e.x, e.y], e.x, e.y)
 
-        if self.type==1:
+        if self.type==1:    # wallpaper
             if self.tool == self.toolname['pen']:
                 for i in range(len(self.helper.coordsList)):
                     draw.line(self.helper.coordsList[i], fill=str2hex(self.color)
@@ -333,15 +354,18 @@ class Draw:
                                             fill=str2hex(self.color))
 
             elif self.tool == self.toolname['curve']:
+                # in state 0, at release, the end pos is saved
                 if self.helper.state==0 and (self.helper.x, self.helper.y)!=(e.x,e.y):
                     self.helper.x2, self.helper.y2 = e.x,e.y
                     self.helper.state=1
+                # in state 1, at release, lines drawn
                 elif self.helper.state==1:
                     for i in range(len(self.helper.coordsList)):
                         draw.line(self.helper.coordsList[i], fill=str2hex(self.color), width=self.width)
                     self.helper.state=0
 
             elif self.tool == self.toolname['fill']:
+                # generate all coords then fill at each
                 coords = wallpaper_patterns.repeat_wallpaper(self.cvw, self.cvh,
                             WALL_P_W, WALL_P_H, self.sym, (e.x, e.y))
                 pic = im.load()
@@ -369,9 +393,11 @@ class Draw:
                                             fill=str2hex(self.color))
 
             elif self.tool == self.toolname['curve']:
+                # in state 0, at release, the end pos is saved
                 if self.helper.state==0 and (self.helper.x, self.helper.y)!=(e.x,e.y):
                     self.helper.x2, self.helper.y2 = e.x,e.y
                     self.helper.state=1
+                # in state 1, lines drawn
                 elif self.helper.state==1:
                     for i in range(len(self.helper.coordsList)):
                         draw.line(self.helper.coordsList[i], fill=str2hex(self.color), width=self.width)
@@ -393,25 +419,33 @@ class Draw:
         self.helper.new_im(im)
         self.draw()
 
+    # method to handle all hover events (only for curves & in state 1)
     def hover(self, e):
+        # free draw
         if self.type==0 and self.tool==self.toolname['curve'] and self.helper.state==1:
+            # generate curve coords, erase old and draw new
             self.helper.coordsList = curvecoords(self.helper.x, self.helper.y,
-            self.helper.x2, self.helper.y2, e.x, e.y)
+                self.helper.x2, self.helper.y2, e.x, e.y)
             self.cv.delete('temp')
             for coords in self.helper.coordsList:
                     self.cv.create_line(self.helper.coordsList, width=self.width,
                     fill=self.color, tag='temp')
-
+        # wallpaper
         elif self.type==1 and self.tool==self.toolname['curve'] and self.helper.state==1:
-            self.helper.xa, self.helper.ya = e.x, e.y
+            # generate curve coords, erase old and draw new
+            self.helper.xa, self.helper.ya = e.x, e.y   # anchor pos
+            # all coords corresponding to start pos of curve
             p1coords = wallpaper_patterns.repeat_wallpaper(self.cvw, self.cvh,
                         WALL_P_W, WALL_P_H, self.sym, (self.helper.x, self.helper.y))
+            # all coords corresponding to end pos of curve
             p2coords = wallpaper_patterns.repeat_wallpaper(self.cvw, self.cvh,
                         WALL_P_W, WALL_P_H, self.sym, (self.helper.x2, self.helper.y2))
+            # all coords corresponding to anchor pos of curve
             pacoords = wallpaper_patterns.repeat_wallpaper(self.cvw, self.cvh,
                         WALL_P_W, WALL_P_H, self.sym, (self.helper.xa, self.helper.ya))
             self.helper.coordsList = []
             self.cv.delete('temp')
+            # draw all curves
             for i in range(len(p1coords)):
                 args = p1coords[i] +p2coords[i] + pacoords[i]
                 curve = curvecoords(*args)
@@ -419,12 +453,16 @@ class Draw:
                 self.cv.create_line(curve, width=self.width,
                     fill=self.color, tag='temp')
 
+        # frieze
         elif self.type==2 and self.tool==self.toolname['curve'] and self.helper.state==1:
             self.helper.xa, self.helper.ya = e.x, e.y
+            # all coords corresponding to end pos of curve
             p1coords = frieze.repeat(self.cvw, self.cvh, FRIEZE_R,
                                     self.sym, (self.helper.x, self.helper.y))
+            # all coords corresponding to end pos of curve
             p2coords = frieze.repeat(self.cvw, self.cvh, FRIEZE_R,
                                     self.sym, (self.helper.x2, self.helper.y2))
+            # all coords corresponding to end pos of curve
             pacoords = frieze.repeat(self.cvw, self.cvh, FRIEZE_R,
                                     self.sym, (self.helper.xa, self.helper.ya))
             self.helper.coordsList = []
@@ -436,8 +474,7 @@ class Draw:
                 self.cv.create_line(curve, width=self.width,
                     fill=self.color, tag='temp')
 
-
-
+    # draw grids
     def grid(self):
         if self.type==1:
             coords = wallpaper_patterns.repeat_wallpaper(self.cvw, self.cvh,
@@ -457,6 +494,7 @@ class Draw:
                     self.cv.create_rectangle(coords[i][0], coords[i][1],
                             coords[i][0]+self.cvh*FRIEZE_R, self.cvh, outline='red')
 
+    # method to add image to main canvas
     def finish(self, e):
         self.meta.add_layer(self.helper.im)
         self.root.destroy()

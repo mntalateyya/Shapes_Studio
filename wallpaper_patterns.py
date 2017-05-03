@@ -1,6 +1,8 @@
 import Tkinter
 from math import *
 
+# routines to calculate for each point in canvas, the corresponding points
+# in the whole wallpaper
 
 def repeat_wallpaper(cw, ch, cell_w,cell_h, s, (x, y)):
     # canvas width, canvas height, width:height ratio of cell,
@@ -26,13 +28,13 @@ def repeat_wallpaper(cw, ch, cell_w,cell_h, s, (x, y)):
 
     if s == 1:  # cm
         if y%(2*cell_h)<cell_h:
-            x = x%int(2*cell_w)-int(0.5*cell_w)
+            x = x%int(cell_w)-int(0.5*cell_w)
         else:
-            x = x%int(2*cell_w)
+            x = x%int(cell_w)
         y %= int(cell_h)
         coords = [(x, y)]
-        coords += [(int( 2*cell_w - i[0] - 1), i[1]) for i in coords[-1:]]
-        for j in range(cw/cell_w+1):
+        coords += [(cell_w-x-1, y)]
+        for j in range(cw/cell_w+2):
             coords += [(int(i[0] + cell_w), i[1]) for i in coords[-2:]]
 
         count=int(ceil(float(ch)/cell_h))
@@ -41,7 +43,7 @@ def repeat_wallpaper(cw, ch, cell_w,cell_h, s, (x, y)):
             if(i%2==0):
                 coords1 +=[(e[0]-int(0.5*cell_w),int(e[1]+(cell_h*i))) for e in coords]
             if(i%2==1):
-                coords1 +=[(e[0],int(e[1]+(cell_h*i))) for e in coords]
+                coords1 +=[(e[0]-cell_w,int(e[1]+(cell_h*i))) for e in coords]
 
     if s == 2:  # p2
         if y%(2*cell_h)<cell_h:

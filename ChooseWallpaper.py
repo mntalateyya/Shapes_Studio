@@ -2,6 +2,8 @@ import Tkinter
 from PIL import ImageTk, Image
 import DrawMain
 
+# This class creates window that allows the user to choose a wallpaper pattern
+
 class ChooseWallpaper:
     def __init__(self, meta):
         self.root = Tkinter.Toplevel()
@@ -45,7 +47,7 @@ class ChooseWallpaper:
         photos.append(ImageTk.PhotoImage(Image.open('Resources/wcmm.bmp')))
         ids.append(self.cv.create_image(136,533, image=photos[-1], anchor=Tkinter.NW))
         self.cv.create_text(256, 700, text='cmm', fill='slate gray')
-        self.cv.tag_bind(ids[-1], '<Button-1>', lambda e: self.start(5))
+        self.cv.tag_bind(ids[-1], '<Button-1>', lambda e: self.start(6))
 
         self.root.mainloop()
 
