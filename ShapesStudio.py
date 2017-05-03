@@ -109,6 +109,7 @@ class Main:
     # on press save current pos to calculate offset at move
     def press(self, e):
         if self.meta.layers:
+            if self.focus==-1: self.focus=0
             self.x = e.x
             self.y = e.y
             self.imcoords = self.meta.layerscoords[self.meta.focus]
